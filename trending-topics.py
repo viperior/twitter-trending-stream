@@ -1,6 +1,5 @@
 import twittercredentials, time
 from twarc import Twarc
-from operator import itemgetter
 
 print("Getting trending Twitter topics...")
 
