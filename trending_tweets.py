@@ -1,5 +1,8 @@
 import twittercredentials, time
 from twarc import Twarc
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
 
 def get_trending_topic_tweets(woeid = 1, result_type = 'popular', max_pages_per_topic = 1, max_topics_to_fetch = 100, max_tweets_per_topic = 100, slow_output = False, verbose_output = False):
   print('Getting trending Twitter topics...')
