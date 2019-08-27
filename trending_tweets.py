@@ -60,14 +60,22 @@ def get_trending_topic_tweets(woeid = 1, result_type = 'popular', max_pages_per_
   trends_list.sort(key=lambda x: int(x[1]), reverse = False)
   
   # Assemble the pandas data frame and matplotlib chart.
-  labels = ['Topic', 'Tweet Volume']
-  df = pd.DataFrame.from_records(trends_list, columns=labels)
+  chart_labels = ['Topic', 'Tweet Volume']
+  df = pd.DataFrame.from_records(trends_list, columns = chart_labels)
   ax = df.plot.barh(x='Topic', y='Tweet Volume', rot=0)
   ax.set_xlabel('Tweet Volume')
   ax.set_title('Trending Twitter Topics')
+  
+  # Add more left margin for long topic names.
+  plt.subplots_adjust(bottom = 0.3, left = 0.25)
+  
+  # Rotate x-axis labels 90 degrees.
+  plt.xticks(rotation=90)
+
+  # Save plot to image file.
   plt.savefig('twitter_topics_by_tweet_volume_bar_chart.svg')
       
 def get_twitter_trends(twarc_session, woeid = 1):
   return twarc_session.trends_place(woeid)[0]['trends']
 
-get_trending_topic_tweets(max_topics_to_fetch = 8, max_tweets_per_topic = 5, slow_output = False, verbose_output = False)
+get_trending_topic_tweets(max_topics_to_fetch = 7, max_tweets_per_topic = 5, slow_output = False, verbose_output = False)
