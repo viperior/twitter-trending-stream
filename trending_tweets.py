@@ -4,10 +4,8 @@ from twarc import Twarc
 def get_trending_topic_tweets(woeid = 1, result_type = 'popular', max_pages_per_topic = 1, max_topics_to_fetch = 100, max_tweets_per_topic = 100, slow_output = False, verbose_output = False):
   print('Getting trending Twitter topics...')
   
-  t = Twarc(twittercredentials.twitter_consumer_key(), twittercredentials.twitter_consumer_secret(), twittercredentials.twitter_access_token(), twittercredentials.twitter_access_token_secret())
-  
-  trends = t.trends_place(woeid)
-  trends_list = trends[0]['trends'][:max_topics_to_fetch]
+  twarc_session = Twarc(twittercredentials.twitter_consumer_key(), twittercredentials.twitter_consumer_secret(), twittercredentials.twitter_access_token(), twittercredentials.twitter_access_token_secret())
+  trends_list = get_twitter_trends(twarc_session, woeid, max_topics_to_fetch)
   
   for trend in trends_list:
     trend_query = trend['query']
@@ -18,7 +16,7 @@ def get_trending_topic_tweets(woeid = 1, result_type = 'popular', max_pages_per_
     if slow_output:
       time.sleep(1)
     
-    tweets = t.search(q = trend_query, result_type = result_type, max_pages = max_pages_per_topic)
+    tweets = twarc_session.search(q = trend_query, result_type = result_type, max_pages = max_pages_per_topic)
     tweets_fetched = 0
     
     while tweets_fetched < max_tweets_per_topic:
@@ -37,5 +35,8 @@ def get_trending_topic_tweets(woeid = 1, result_type = 'popular', max_pages_per_
     
     if slow_output:
       time.sleep(1)
+      
+def get_twitter_trends(twarc_session, woeid = 1, max_topics_to_fetch = 100):
+  return twarc_session.trends_place(woeid)[0]['trends'][:max_topics_to_fetch]
 
 get_trending_topic_tweets(max_topics_to_fetch = 3, max_tweets_per_topic = 5, slow_output = True, verbose_output = True)
