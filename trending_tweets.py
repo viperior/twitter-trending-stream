@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.style as style
+import json
 
 def get_trending_topic_tweets(woeid = 1, result_type = 'popular', max_pages_per_topic = 1, max_topics_to_fetch = 100, fetch_topic_tweets = False, max_tweets_per_topic = 100, slow_output = False, verbose_output = False):
   print('Getting trending Twitter topics...')
@@ -11,6 +12,16 @@ def get_trending_topic_tweets(woeid = 1, result_type = 'popular', max_pages_per_
   twarc_session = Twarc(twittercredentials.twitter_consumer_key(), twittercredentials.twitter_consumer_secret(), twittercredentials.twitter_access_token(), twittercredentials.twitter_access_token_secret())
   trends = get_twitter_trends(twarc_session, woeid)
   trends_list = []
+  tweets_dict = {}
+  
+  # Sort the list of trending Twitter topics by tweet volume.    
+  trends_list.sort(key=lambda x: int(x[1]), reverse = True)
+  
+  # Reduce the list to the number of maximum topics specified.
+  trends_list = trends_list[:max_topics_to_fetch]
+  
+  # Resort the truncated topic list.
+  trends_list.sort(key=lambda x: int(x[1]), reverse = False)
   
   for trend in trends:
     current_trend = []
@@ -32,10 +43,17 @@ def get_trending_topic_tweets(woeid = 1, result_type = 'popular', max_pages_per_
     tweets_fetched = 0
     sentinel = object()
     
+    # Fetch tweets
     while fetch_topic_tweets and (tweets_fetched < max_tweets_per_topic):
       tweet = next(tweets, sentinel)
       if tweet is sentinel:
         break
+      
+      # Add originating query to current tweet dictionary object.
+      tweet['query'] = trend_query
+      
+      # Add current tweet to tweet dictionary.
+      tweets_dict[tweet['id']] = tweet
       
       if verbose_output:
         print('\t' + tweet['user']['name'] + ': "' + tweet['full_text'] + '" (Retweeted ' + str(tweet['retweet_count']) + 'X, favorited ' + str(tweet['favorite_count']) + 'X)')
@@ -50,15 +68,6 @@ def get_trending_topic_tweets(woeid = 1, result_type = 'popular', max_pages_per_
     
     if slow_output:
       time.sleep(1)
-  
-  # Sort the list of trending Twitter topics by tweet volume.    
-  trends_list.sort(key=lambda x: int(x[1]), reverse = True)
-  
-  # Reduce the list to the number of maximum topics specified.
-  trends_list = trends_list[:max_topics_to_fetch]
-  
-  # Resort the truncated topic list.
-  trends_list.sort(key=lambda x: int(x[1]), reverse = False)
   
   # Use the fivethirtyeight style
   style.use('fivethirtyeight')
@@ -80,8 +89,12 @@ def get_trending_topic_tweets(woeid = 1, result_type = 'popular', max_pages_per_
 
   # Save plot to image file.
   plt.savefig('twitter_topics_by_tweet_volume_bar_chart.svg')
+  
+  # Save tweets to file.
+  with open('./data/tweets.json', 'w') as json_file:
+    json.dump(tweets_dict, json_file)
       
 def get_twitter_trends(twarc_session, woeid = 1):
   return twarc_session.trends_place(woeid)[0]['trends']
 
-get_trending_topic_tweets(max_topics_to_fetch = 50, max_tweets_per_topic = 5, woeid = 23424977, slow_output = False, verbose_output = False)
+get_trending_topic_tweets(max_topics_to_fetch = 1, max_tweets_per_topic = 1, woeid = 23424977, fetch_topic_tweets = True, slow_output = False, verbose_output = True)
