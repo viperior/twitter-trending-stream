@@ -3,6 +3,7 @@ from twarc import Twarc
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.style as style
 
 def get_trending_topic_tweets(woeid = 1, result_type = 'popular', max_pages_per_topic = 1, max_topics_to_fetch = 100, fetch_topic_tweets = False, max_tweets_per_topic = 100, slow_output = False, verbose_output = False):
   print('Getting trending Twitter topics...')
@@ -59,15 +60,20 @@ def get_trending_topic_tweets(woeid = 1, result_type = 'popular', max_pages_per_
   # Resort the truncated topic list.
   trends_list.sort(key=lambda x: int(x[1]), reverse = False)
   
+  # Use the fivethirtyeight style
+  style.use('fivethirtyeight')
+  
   # Assemble the pandas data frame and matplotlib chart.
   chart_labels = ['Topic', 'Tweet Volume']
   df = pd.DataFrame.from_records(trends_list, columns = chart_labels)
   ax = df.plot.barh(x='Topic', y='Tweet Volume', rot=0)
   ax.set_xlabel('Tweet Volume')
+  ax.get_legend().remove()
+  ax.tick_params(axis='both', which='major', labelsize = 9)
   ax.set_title('Trending Twitter Topics')
   
   # Add more left margin for long topic names.
-  plt.subplots_adjust(bottom = 0.3, left = 0.25)
+  plt.subplots_adjust(bottom = 0.35, left = 0.35)
   
   # Rotate x-axis labels 90 degrees.
   plt.xticks(rotation=90)
@@ -78,4 +84,4 @@ def get_trending_topic_tweets(woeid = 1, result_type = 'popular', max_pages_per_
 def get_twitter_trends(twarc_session, woeid = 1):
   return twarc_session.trends_place(woeid)[0]['trends']
 
-get_trending_topic_tweets(max_topics_to_fetch = 7, max_tweets_per_topic = 5, slow_output = False, verbose_output = False)
+get_trending_topic_tweets(max_topics_to_fetch = 50, max_tweets_per_topic = 5, woeid = 23424977, slow_output = False, verbose_output = False)
