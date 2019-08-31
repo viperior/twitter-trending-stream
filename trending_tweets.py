@@ -6,13 +6,16 @@ import matplotlib.pyplot as plt
 import matplotlib.style as style
 import json
 
-def convert_twarc_tweet_data_to_dict(tweets):
+def convert_twarc_tweet_data_to_dict(tweets, search_query):
   tweets_dict = {}
   sentinel = object()
   tweet = next(tweets, sentinel)
 
   while tweet is not sentinel:
-    tweets_dict[tweet['id']] = tweet
+    tweet_dict = {}
+    tweet_dict['tweet_json_data'] = tweet
+    tweet_dict['search_query'] = search_query
+    tweets_dict[tweet['id']] = tweet_dict
     tweet = next(tweets, sentinel)
     
   return tweets_dict
@@ -48,13 +51,20 @@ def get_trending_topic_tweets(woeid = 1, result_type = 'popular', max_pages_per_
   
   # Fetch tweets for trending topics
   if fetch_topic_tweets:
+    trending_tweets_data = {}
+    i = 0
+    
     for trend in trends_list:
+      tweet_batch = {}
       trend_query = trend[2]
+      trend_query_name = trend[0]
       tweets = get_twarc_session().search(q = trend_query, result_type = result_type, max_pages = max_pages_per_topic)
-      tweets_dict = convert_twarc_tweet_data_to_dict(tweets)
+      tweets_dict = convert_twarc_tweet_data_to_dict(tweets, trend_query_name)
+      trending_tweets_data[i] = tweets_dict
+      i += 1
     
     # Save tweets to file.
-    save_tweet_data_to_json_file(tweets_dict, './data/tweets.json')
+    save_tweet_data_to_json_file(trending_tweets_data, './data/tweets.json')
   
   # Generate trending topics plot and save to file.
   trends_list_2d = remove_last_element_of_children_in_nested_list(trends_list)
@@ -96,17 +106,17 @@ def remove_last_element_of_children_in_nested_list(nested_list):
     new_list.append(child)
     
   return new_list
-  
+
 def save_trending_topics_chart_to_file(plot, filename):
   plot.savefig(filename)
-  
+
 def save_tweet_data_to_json_file(tweets_dict, filename):
   with open(filename, 'w') as json_file:
     json.dump(tweets_dict, json_file)
-    
+
 def sort_nested_list_by_element_index(unsorted_list, element_index, sort_order = 'asc'):
   reverse_value = sort_order == 'desc'
   unsorted_list.sort(key=lambda x: int(x[element_index]), reverse = reverse_value)
   return unsorted_list
 
-get_trending_topic_tweets(max_topics_to_fetch = 20, max_tweets_per_topic = 1, woeid = 23424977, fetch_topic_tweets = False)
+get_trending_topic_tweets(max_topics_to_fetch = 15, max_pages_per_topic = 1, max_tweets_per_topic = 100, woeid = 23424977, fetch_topic_tweets = True)
