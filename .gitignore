@@ -1,5 +1,6 @@
 __pycache__/
 data/*sample.json
 .~c9*.py
+output/gallery.html
 twarc.log
 twittercredentials.py
