@@ -2,5 +2,6 @@ __pycache__/
 data/
 .~c9*.py
 output/gallery.html
+postgres_config.py
 twarc.log
 twittercredentials.py
