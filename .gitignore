@@ -1,6 +1,7 @@
 __pycache__/
 data/
 .~c9*.py
+output/covid19_slideshow_*
 output/gallery.html
 postgres_config.py
 twarc.log
