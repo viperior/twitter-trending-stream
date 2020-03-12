@@ -42,9 +42,6 @@ def extract_sample_tweets_from_json():
             tweet_json = json.loads(line)
             
             with open(tweet_jsonl_target_file_path, 'a') as target_file:
-                #if index > 0:
-                #    target_file.write('\n')
-                    
                 target_file.write(line)
                 
     return True
