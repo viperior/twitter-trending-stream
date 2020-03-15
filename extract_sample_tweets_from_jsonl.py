@@ -8,17 +8,17 @@ def erase_file_contents(file_path):
     input_is_valid = False
     
     while not input_is_valid:
-        user_confirmed_deletion = input('Are you sure you want to delete this file? y/n\n')
+        user_confirmed_deletion = input('Are you sure you want to overwrite this file? y/n\n')
         
         if user_confirmed_deletion == 'y':
             input_is_valid = True
             open(file_path, 'w').close()
-            print('File deleted: ' + file_path)
+            print('File overwritten: ' + file_path)
         elif user_confirmed_deletion == 'n':
             input_is_valid = True
-            print('File deletion aborted.')
+            print('File overwrite aborted.')
         else:
-            print('Invalid command. Please type "y" or "no" and press enter to confirm file deletion.')
+            print('Invalid command. Please type "y" or "no" and press enter to confirm file overwrite.')
 
 def extract_sample_tweets_from_json():
     script_parameter_count = len(sys.argv) - 1
