@@ -26,6 +26,7 @@ def extract_sample_tweets_from_json():
     
     if script_parameter_count < expected_parameter_count:
         print('Script is missing paramters. ' + str(script_parameter_count) + ' provided. ' + str(expected_parameter_count) + ' expected.')
+        print('Parameters: (tweet_jsonl_source_file_path, tweet_jsonl_target_file_path, tweet_quantity)')
         return False
     
     tweet_jsonl_source_file_path = sys.argv[1]
