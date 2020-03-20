@@ -9,7 +9,7 @@ def setup_tweet_table():
         sql = """CREATE TABLE IF NOT EXISTS tweet (
                     tweet_id bigserial PRIMARY KEY,
                     status_id bigint NOT NULL,
-                    created_at_str varchar(30) NOT NULL,
+                    created_at_str varchar(50) NOT NULL,
                     language_code int,
                     is_retweet boolean NOT NULL,
                     retweet_status_id bigint,
