@@ -10,7 +10,7 @@ def setup_tweet_table():
                     tweet_id bigserial PRIMARY KEY,
                     status_id bigint NOT NULL,
                     created_at_str varchar(50) NOT NULL,
-                    language_code int,
+                    language_code varchar(20),
                     is_retweet boolean NOT NULL,
                     retweet_status_id bigint,
                     text varchar(600) NOT NULL
