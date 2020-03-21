@@ -1,14 +1,15 @@
 # Load a set of tweets residing in a jsonl file into a postgres database.
 
+import datetime
+import display_timestamped_message
+import json
+import os
 import postgres_config
 import psycopg2
 import psycopg2.extras as extras
-import sys
-import json
 import time
-from datetime import datetime
-import os
 import subprocess
+import sys
 
 def convert_tweet_dict_to_tuple(tweet_dict):
     tweet_data_list = []
@@ -54,14 +55,11 @@ def convert_tweet_json_to_dict(tweet_json):
     return tweet_dict
     
 def display_sleep_message(sleep_duration):
-    display_timestamped_message('Sleeping ' + str(sleep_duration) + ' seconds...')
+    display_timestamped_message.display_timestamped_message('Sleeping ' + str(sleep_duration) + ' seconds...')
     time.sleep(sleep_duration)
     
-def display_timestamped_message(message):
-    print('[' + str(datetime.utcnow()) + '] ' + message)
-    
 def insert_tweet_rows_into_database(tweet_data_rows):
-    display_timestamped_message('Inserting batch of ' + str(len(tweet_data_rows)) + ' tweets...')
+    display_timestamped_message.display_timestamped_message('Inserting batch of ' + str(len(tweet_data_rows)) + ' tweets...')
     
     try:
         connection = psycopg2.connect(host = 'localhost', database = postgres_config.db_name(), user = postgres_config.db_user(), password = postgres_config.db_password())
@@ -83,7 +81,7 @@ def insert_tweet_rows_into_database(tweet_data_rows):
         cursor.close()
         connection.close()
         
-        display_timestamped_message('Batch insert complete')
+        display_timestamped_message.display_timestamped_message('Batch insert complete')
         
     except Exception as ex:
         print('Error occurred while attempting to connect to postgres database.')
@@ -99,8 +97,8 @@ def inspect_tweet_dict(tweet_dict):
         print('Attribute name: ' + attribute + '; Type: ' + str(type(tweet_dict[attribute])) + '; Value: ' + str(tweet_dict[attribute]))
     
 def load_tweets_into_postgres():
-    script_start_time = datetime.now()
-    display_timestamped_message('Loading tweets into postgres database from jsonl file...')
+    script_start_time = datetime.datetime.now()
+    display_timestamped_message.display_timestamped_message('Loading tweets into postgres database from jsonl file...')
     script_parameter_count = len(sys.argv) - 1
     expected_parameter_count = 1
     
@@ -132,7 +130,7 @@ def load_tweets_into_postgres():
     current_batch_size = 0
     
     start_postgresql_service()
-    display_timestamped_message('Reading tweets from file...')
+    display_timestamped_message.display_timestamped_message('Reading tweets from file...')
     
     with open(tweet_jsonl_file_path, 'r') as file:
         for index, line in enumerate(file):
@@ -155,14 +153,14 @@ def load_tweets_into_postgres():
                 current_batch_data = []
             
                 if tweet_quantity_is_limited and processed_tweets_count >= tweet_quantity:
-                    display_timestamped_message('Halting due to reaching max tweet load limit specified: ' + str(processed_tweets_count) + '/' + str(tweet_quantity))
+                    display_timestamped_message.display_timestamped_message('Halting due to reaching max tweet load limit specified: ' + str(processed_tweets_count) + '/' + str(tweet_quantity))
                     break
                 
     if current_batch_size > 0:
         insert_tweet_rows_into_database(current_batch_data)
                 
-    display_timestamped_message('Total tweets processed: ' + str(processed_tweets_count))
-    script_end_time = datetime.now()
+    display_timestamped_message.display_timestamped_message('Total tweets processed: ' + str(processed_tweets_count))
+    script_end_time = datetime.datetime.now()
     script_duration = script_end_time - script_start_time
     script_duration_in_seconds = script_duration.total_seconds()
     print('Script execution time (secs): ' + str(script_duration_in_seconds))
@@ -174,10 +172,10 @@ def postgresql_service_is_running():
     
 def start_postgresql_service():
     if postgresql_service_is_running():
-        display_timestamped_message('Postgresql service is running.')
+        display_timestamped_message.display_timestamped_message('Postgresql service is running.')
     else:
-        display_timestamped_message('Postgresql service is not running.')
-        display_timestamped_message('Starting postgresql service...')
+        display_timestamped_message.display_timestamped_message('Postgresql service is not running.')
+        display_timestamped_message.display_timestamped_message('Starting postgresql service...')
         command_output = subprocess.call(['sudo', 'service', 'postgresql', 'start'])
         print(command_output)
                 
