@@ -10,10 +10,15 @@ def setup_tweet_table():
                     tweet_id bigserial PRIMARY KEY,
                     status_id bigint NOT NULL,
                     created_at_str varchar(50) NOT NULL,
-                    language_code varchar(20),
+                    language varchar(20),
                     is_retweet boolean NOT NULL,
-                    retweet_status_id bigint,
-                    text varchar(600) NOT NULL
+                    retweeted_status_id bigint,
+                    text varchar(600) NOT NULL,
+                    user_screen_name varchar(30),
+                    retweeted_status_retweet_count bigint,
+                    retweeted_status_text varchar(600),
+                    retweeted_status_user_screen_name varchar(30),
+                    retweeted_status_language varchar(20)
                  );"""
         cursor.execute(sql)
         connection.commit()
