@@ -28,15 +28,20 @@ def load_tweets_into_postgres():
     
     if script_parameter_count < expected_parameter_count:
         print('Script is missing paramters. ' + str(script_parameter_count) + ' provided. ' + str(expected_parameter_count) + ' expected.')
-        print('Parameters: (tweet_jsonl_file_path, tweet_quantity [optional])')
+        print('Parameters: (tweet_jsonl_file_path[, tweet_quantity, delay_time_between_tweets])')
         return False
     
     tweet_jsonl_file_path = sys.argv[1]
     tweet_quantity_is_limited = False
+    delay_time_between_tweets_is_specified = False
     
     if script_parameter_count > 1:
         tweet_quantity_is_limited = True
         tweet_quantity = int(sys.argv[2])
+        
+    if script_parameter_count > 2:
+        delay_time_between_tweets_is_specified = True
+        delay_time_between_tweets = float(sys.argv[3])
     
     # Process up to 100 tweets at a time, adding them to a dictionary.
     # Insert tweets that are not already stored in the database.
@@ -60,12 +65,13 @@ def load_tweets_into_postgres():
             for attribute in attributes_to_inspect:
                 print('Attribute name: ' + attribute + '; Type: ' + str(type(tweet_dict[attribute])) + '; Value: ' + str(tweet_dict[attribute]))
             
-            i = 3
-            
-            while i > 0:
-                print(str(i) + '...')
-                time.sleep(1)
-                i -= 1
+            if delay_time_between_tweets_is_specified:
+                i = delay_time_between_tweets
+                
+                while i > 0:
+                    print(str(i) + '...')
+                    time.sleep(1)
+                    i -= 1
     
             try:
                 connection = psycopg2.connect(host = 'localhost', database = postgres_config.db_name(), user = postgres_config.db_user(), password = postgres_config.db_password())
