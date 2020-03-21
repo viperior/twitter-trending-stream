@@ -14,6 +14,9 @@ def convert_tweet_json_to_dict(tweet_json):
     tweet_dict['created_at_str'] = tweet_json['created_at']
     tweet_dict['is_retweet'] = 'retweeted_status' in tweet_json
     
+    if 'lang' in tweet_json:
+        tweet_dict['language_code'] = tweet_json['lang']
+    
     # Add:
         # Media type
         # Media URL
