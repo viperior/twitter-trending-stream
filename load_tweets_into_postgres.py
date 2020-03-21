@@ -7,6 +7,8 @@ import sys
 import json
 import time
 from datetime import datetime
+import os
+import subprocess
 
 def convert_tweet_dict_to_tuple(tweet_dict):
     tweet_data_list = []
@@ -129,6 +131,7 @@ def load_tweets_into_postgres():
     processed_tweets_count = 0
     current_batch_size = 0
     
+    start_postgresql_service()
     display_timestamped_message('Reading tweets from file...')
     
     with open(tweet_jsonl_file_path, 'r') as file:
@@ -163,6 +166,20 @@ def load_tweets_into_postgres():
     script_duration = script_end_time - script_start_time
     script_duration_in_seconds = script_duration.total_seconds()
     print('Script execution time (secs): ' + str(script_duration_in_seconds))
+    
+def postgresql_service_is_running():
+    postgresql_service_status = os.system('service postgresql status')
+    
+    return postgresql_service_status == 0
+    
+def start_postgresql_service():
+    if postgresql_service_is_running():
+        display_timestamped_message('Postgresql service is running.')
+    else:
+        display_timestamped_message('Postgresql service is not running.')
+        display_timestamped_message('Starting postgresql service...')
+        command_output = subprocess.call(['sudo', 'service', 'postgresql', 'start'])
+        print(command_output)
                 
 def tweet_fields():
     tweet_fields = [
