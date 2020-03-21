@@ -71,12 +71,8 @@ def load_tweets_into_postgres():
                     print('Attribute name: ' + attribute + '; Type: ' + str(type(tweet_dict[attribute])) + '; Value: ' + str(tweet_dict[attribute]))
             
             if delay_time_between_tweets_is_specified:
-                i = delay_time_between_tweets
-                
-                while i > 0:
-                    print(str(i) + '...')
-                    time.sleep(1)
-                    i -= 1
+                print('Sleeping ' + str(delay_time_between_tweets) + ' seconds...')
+                time.sleep(delay_time_between_tweets)
     
             try:
                 connection = psycopg2.connect(host = 'localhost', database = postgres_config.db_name(), user = postgres_config.db_user(), password = postgres_config.db_password())
