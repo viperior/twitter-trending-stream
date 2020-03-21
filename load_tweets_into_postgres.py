@@ -12,7 +12,12 @@ def convert_tweet_json_to_dict(tweet_json):
     tweet_dict['status_id'] = tweet_json['id']
     tweet_dict['text'] = tweet_json['text']
     tweet_dict['created_at_str'] = tweet_json['created_at']
-    tweet_dict['is_retweet'] = 'retweeted_status' in tweet_json
+    
+    if 'retweeted_status' in tweet_json:
+        tweet_dict['is_retweet'] = True
+        tweet_dict['retweet_status_id'] = tweet_json['retweeted_status']['id']
+    else:
+        tweet_dict['is_retweet'] = False
     
     if 'lang' in tweet_json:
         tweet_dict['language_code'] = tweet_json['lang']
@@ -20,7 +25,6 @@ def convert_tweet_json_to_dict(tweet_json):
     # Add:
         # Media type
         # Media URL
-        # Retweeted status id
     
     return tweet_dict
     
