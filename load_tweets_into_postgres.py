@@ -1,6 +1,7 @@
 # Load a set of tweets residing in a jsonl file into a postgres database.
 
 import datetime
+import display_script_duration
 import display_timestamped_message
 import json
 import os
@@ -160,10 +161,7 @@ def load_tweets_into_postgres():
         insert_tweet_rows_into_database(current_batch_data)
                 
     display_timestamped_message.display_timestamped_message('Total tweets processed: ' + str(processed_tweets_count))
-    script_end_time = datetime.datetime.now()
-    script_duration = script_end_time - script_start_time
-    script_duration_in_seconds = script_duration.total_seconds()
-    print('Script execution time (secs): ' + str(script_duration_in_seconds))
+    display_script_duration.display_script_duration(script_start_time)
     
 def postgresql_service_is_running():
     postgresql_service_status = os.system('service postgresql status')
