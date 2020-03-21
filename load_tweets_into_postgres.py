@@ -60,14 +60,7 @@ def load_tweets_into_postgres():
             if display_tweet_data_is_specified:
                 print(tweet_dict)
                 
-                attributes_to_inspect = [
-                    'status_id',
-                    'text',
-                    'created_at_str',
-                    'is_retweet'
-                ]
-                
-                for attribute in attributes_to_inspect:
+                for attribute in tweet_dict.keys():
                     print('Attribute name: ' + attribute + '; Type: ' + str(type(tweet_dict[attribute])) + '; Value: ' + str(tweet_dict[attribute]))
             
             if delay_time_between_tweets_is_specified:
