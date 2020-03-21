@@ -101,7 +101,7 @@ def load_tweets_into_postgres():
         display_tweet_data = sys.argv[3].upper() == 'T'
         
     current_batch_data = []
-    max_batch_size = 300000
+    max_batch_size = 150000
     processed_tweets_count = 0
     current_batch_size = 0
     
