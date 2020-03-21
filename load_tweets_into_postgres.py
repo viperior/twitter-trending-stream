@@ -17,7 +17,6 @@ def convert_tweet_json_to_dict(tweet_json):
     # Add:
         # Media type
         # Media URL
-        # Retweet flag
         # Retweeted status id
     
     return tweet_dict
@@ -28,12 +27,13 @@ def load_tweets_into_postgres():
     
     if script_parameter_count < expected_parameter_count:
         print('Script is missing paramters. ' + str(script_parameter_count) + ' provided. ' + str(expected_parameter_count) + ' expected.')
-        print('Parameters: (tweet_jsonl_file_path[, tweet_quantity, delay_time_between_tweets])')
+        print('Parameters: (tweet_jsonl_file_path[, tweet_quantity, delay_time_between_tweets, display_loaded_tweet_data])')
         return False
     
     tweet_jsonl_file_path = sys.argv[1]
     tweet_quantity_is_limited = False
     delay_time_between_tweets_is_specified = False
+    display_tweet_data_is_specified = False
     
     if script_parameter_count > 1:
         tweet_quantity_is_limited = True
@@ -42,28 +42,33 @@ def load_tweets_into_postgres():
     if script_parameter_count > 2:
         delay_time_between_tweets_is_specified = True
         delay_time_between_tweets = float(sys.argv[3])
+        
+    if script_parameter_count > 3:
+        display_tweet_data_is_specified = True
+        display_tweet_data = sys.argv[3].upper() == 'T'
     
     # Process up to 100 tweets at a time, adding them to a dictionary.
     # Insert tweets that are not already stored in the database.
     with open(tweet_jsonl_file_path, 'r') as file:
         for index, line in enumerate(file):
-            tweet_json = json.loads(line)
-            tweet_dict = convert_tweet_json_to_dict(tweet_json)
-            
             if tweet_quantity_is_limited and index >= tweet_quantity:
                 break
             
-            print(tweet_dict)
+            tweet_json = json.loads(line)
+            tweet_dict = convert_tweet_json_to_dict(tweet_json)
             
-            attributes_to_inspect = [
-                'status_id',
-                'text',
-                'created_at_str',
-                'is_retweet'
-            ]
-            
-            for attribute in attributes_to_inspect:
-                print('Attribute name: ' + attribute + '; Type: ' + str(type(tweet_dict[attribute])) + '; Value: ' + str(tweet_dict[attribute]))
+            if display_tweet_data_is_specified:
+                print(tweet_dict)
+                
+                attributes_to_inspect = [
+                    'status_id',
+                    'text',
+                    'created_at_str',
+                    'is_retweet'
+                ]
+                
+                for attribute in attributes_to_inspect:
+                    print('Attribute name: ' + attribute + '; Type: ' + str(type(tweet_dict[attribute])) + '; Value: ' + str(tweet_dict[attribute]))
             
             if delay_time_between_tweets_is_specified:
                 i = delay_time_between_tweets
