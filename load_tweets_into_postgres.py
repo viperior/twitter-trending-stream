@@ -2,9 +2,18 @@
 
 import postgres_config
 import psycopg2
+import psycopg2.extras as extras
 import sys
 import json
 import time
+
+def convert_tweet_dict_to_tuple(tweet_dict):
+    tweet_data_list = []
+    
+    for key in tweet_fields():
+        tweet_data_list.append(tweet_dict[key])
+            
+    return tuple(tweet_data_list)
 
 def convert_tweet_json_to_dict(tweet_json):
     tweet_dict = {}
@@ -18,15 +27,52 @@ def convert_tweet_json_to_dict(tweet_json):
         tweet_dict['retweet_status_id'] = tweet_json['retweeted_status']['id']
     else:
         tweet_dict['is_retweet'] = False
+        tweet_dict['retweet_status_id'] = None
     
     if 'lang' in tweet_json:
         tweet_dict['language_code'] = tweet_json['lang']
-    
-    # Add:
-        # Media type
-        # Media URL
+    else:
+        tweet_dict['language_code'] = None
     
     return tweet_dict
+    
+def display_sleep_message(sleep_duration):
+    print('Sleeping ' + str(sleep_duration) + ' seconds...')
+    time.sleep(sleep_duration)
+    
+def insert_tweet_rows_into_database(tweet_data_rows):
+    try:
+        connection = psycopg2.connect(host = 'localhost', database = postgres_config.db_name(), user = postgres_config.db_user(), password = postgres_config.db_password())
+        cursor = connection.cursor()
+        sql = "INSERT INTO tweet ("
+        tweet_field_names = tweet_fields()
+        
+        for index, key in enumerate(tweet_field_names):
+            sql += key
+            
+            if index + 1 < len(tweet_field_names):
+                sql += ','
+                
+        sql += ") VALUES %s;"
+        
+        data = tuple(tweet_data_rows)
+        extras.execute_values(cursor, sql, data)
+        connection.commit()
+        cursor.close()
+        connection.close()
+        
+    except Exception as ex:
+        print('Error occurred while attempting to connect to postgres database.')
+        template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+        message = template.format(type(ex).__name__, ex.args)
+        print(message)
+        
+def inspect_tweet_dict(tweet_dict):
+    print('=' * 30)
+    print(tweet_dict)
+    
+    for attribute in tweet_dict.keys():
+        print('Attribute name: ' + attribute + '; Type: ' + str(type(tweet_dict[attribute])) + '; Value: ' + str(tweet_dict[attribute]))
     
 def load_tweets_into_postgres():
     script_parameter_count = len(sys.argv) - 1
@@ -53,61 +99,45 @@ def load_tweets_into_postgres():
     if script_parameter_count > 3:
         display_tweet_data_is_specified = True
         display_tweet_data = sys.argv[3].upper() == 'T'
+        
+    current_batch_data = []
+    max_batch_size = 10000
+    processed_tweets_count = 0
+    current_batch_size = 0
     
-    # Process up to 100 tweets at a time, adding them to a dictionary.
-    # Insert tweets that are not already stored in the database.
     with open(tweet_jsonl_file_path, 'r') as file:
         for index, line in enumerate(file):
-            if tweet_quantity_is_limited and index >= tweet_quantity:
-                break
-            
             tweet_json = json.loads(line)
             tweet_dict = convert_tweet_json_to_dict(tweet_json)
             
             if display_tweet_data_is_specified:
-                print(tweet_dict)
-                
-                for attribute in tweet_dict.keys():
-                    print('Attribute name: ' + attribute + '; Type: ' + str(type(tweet_dict[attribute])) + '; Value: ' + str(tweet_dict[attribute]))
+                inspect_tweet_dict(tweet_dict)
             
             if delay_time_between_tweets_is_specified:
-                print('Sleeping ' + str(delay_time_between_tweets) + ' seconds...')
-                time.sleep(delay_time_between_tweets)
+                display_sleep_message(delay_time_between_tweets)
+                
+            current_batch_data.append(convert_tweet_dict_to_tuple(tweet_dict))
+            current_batch_size += 1
+            processed_tweets_count += 1
+            
+            if current_batch_size >= max_batch_size or (tweet_quantity_is_limited and processed_tweets_count >= tweet_quantity):
+                insert_tweet_rows_into_database(current_batch_data)
+                current_batch_size = 0
+                current_batch_data = []
+            
+                if tweet_quantity_is_limited and processed_tweets_count >= tweet_quantity:
+                    break
+                
+def tweet_fields():
+    tweet_fields = [
+        'status_id',
+        'created_at_str',
+        'language_code',
+        'is_retweet',
+        'retweet_status_id',
+        'text'
+    ]
     
-            try:
-                connection = psycopg2.connect(host = 'localhost', database = postgres_config.db_name(), user = postgres_config.db_user(), password = postgres_config.db_password())
-                cursor = connection.cursor()
-                
-                sql = "INSERT INTO tweet ("
-                data_list = []
-                
-                for index, key in enumerate(tweet_dict.keys()):
-                    sql += key
-                    data_list.append(tweet_dict[key])
-                    
-                    if index + 1 < len(tweet_dict):
-                        sql += ','
-                        
-                sql += ') VALUES ('
-                data = tuple(data_list)
-                        
-                for index, value in enumerate(range(len(tweet_dict))):
-                    sql += '%s'
-                    
-                    if index + 1 < len(tweet_dict):
-                        sql += ','
-                        
-                sql += ');'
-                
-                cursor.execute(sql, data)
-                connection.commit()
-                
-                cursor.close()
-                connection.close()
-            except Exception as ex:
-                print('Error occurred while attempting to connect to postgres database.')
-                template = "An exception of type {0} occurred. Arguments:\n{1!r}"
-                message = template.format(type(ex).__name__, ex.args)
-                print(message)
-        
+    return tweet_fields
+    
 load_tweets_into_postgres()
