@@ -71,13 +71,27 @@ def load_tweets_into_postgres():
                 connection = psycopg2.connect(host = 'localhost', database = postgres_config.db_name(), user = postgres_config.db_user(), password = postgres_config.db_password())
                 cursor = connection.cursor()
                 
-                sql = "INSERT INTO tweet (status_id, created_at_str, is_retweet, text) VALUES (%s, %s, %s, %s);"
-                data = (
-                    tweet_dict['status_id'],
-                    tweet_dict['created_at_str'],
-                    tweet_dict['is_retweet'],
-                    tweet_dict['text']
-                )
+                sql = "INSERT INTO tweet ("
+                data_list = []
+                
+                for index, key in enumerate(tweet_dict.keys()):
+                    sql += key
+                    data_list.append(tweet_dict[key])
+                    
+                    if index + 1 < len(tweet_dict):
+                        sql += ','
+                        
+                sql += ') VALUES ('
+                data = tuple(data_list)
+                        
+                for index, value in enumerate(range(len(tweet_dict))):
+                    sql += '%s'
+                    
+                    if index + 1 < len(tweet_dict):
+                        sql += ','
+                        
+                sql += ');'
+                
                 cursor.execute(sql, data)
                 connection.commit()
                 
