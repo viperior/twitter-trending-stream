@@ -11,14 +11,15 @@ def setup_tweet_table():
                     status_id bigint NOT NULL,
                     created_at_str varchar(50) NOT NULL,
                     language varchar(20),
-                    is_retweet boolean NOT NULL,
                     retweeted_status_id bigint,
+                    is_retweet boolean,
                     text varchar(600) NOT NULL,
                     user_screen_name varchar(30),
                     retweeted_status_retweet_count bigint,
                     retweeted_status_text varchar(600),
                     retweeted_status_user_screen_name varchar(30),
-                    retweeted_status_language varchar(20)
+                    retweeted_status_language varchar(20),
+                    media_url_https varchar(2048)
                  );"""
         cursor.execute(sql)
         connection.commit()
