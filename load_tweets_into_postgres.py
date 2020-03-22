@@ -15,50 +15,42 @@ import sys
 def convert_tweet_dict_to_tuple(tweet_dict):
     tweet_data_list = []
     
-    for key in tweet_fields():
-        tweet_data_list.append(tweet_dict[key])
+    for field_dict in field_map():
+        for field_data in field_dict.values():
+            tweet_data_list.append(tweet_dict[field_data['database_field']])
             
     return tuple(tweet_data_list)
 
 def convert_tweet_json_to_dict(tweet_json):
     tweet_dict = {}
     
-    tweet_dict['status_id'] = tweet_json['id']
-    tweet_dict['text'] = tweet_json['text']
-    tweet_dict['created_at_str'] = tweet_json['created_at']
-    tweet_dict['user_screen_name'] = tweet_json['user']['screen_name']
-    
-    if 'retweeted_status' in tweet_json:
-        tweet_dict['is_retweet'] = True
-        retweeted_status = tweet_json['retweeted_status']
-        tweet_dict['retweeted_status_id'] = retweeted_status['id']
-        tweet_dict['retweeted_status_retweet_count'] = retweeted_status['retweet_count']
-        tweet_dict['retweeted_status_text'] = retweeted_status['text']
-        tweet_dict['retweeted_status_user_screen_name'] = retweeted_status['user']['screen_name']
-        
-        if 'lang' in retweeted_status:
-            tweet_dict['retweeted_status_language'] = retweeted_status['lang']
-        else:
-            tweet_dict['retweeted_status_language'] = None
-    else:
-        tweet_dict['is_retweet'] = False
-        tweet_dict['retweeted_status_id'] = None
-        tweet_dict['retweeted_status_retweet_count'] = None
-        tweet_dict['retweeted_status_text'] = None
-        tweet_dict['retweeted_status_user_screen_name'] = None
-        tweet_dict['retweeted_status_language'] = None
-    
-    if 'lang' in tweet_json:
-        tweet_dict['language'] = tweet_json['lang']
-    else:
-        tweet_dict['language'] = None
-    
+    for field_dict in field_map():
+        for field_map_data in field_dict.values():
+            if 'expression' in field_map_data:
+                tweet_dict[field_map_data['database_field']] = eval(field_map_data['expression'])
+            else:
+                tweet_dict[field_map_data['database_field']] = extract_value_from_json(tweet_json, field_map_data['json_path'], field_map_data['default_value'])
+            
     return tweet_dict
-    
+            
 def display_sleep_message(sleep_duration):
     display_timestamped_message.display_timestamped_message('Sleeping ' + str(sleep_duration) + ' seconds...')
     time.sleep(sleep_duration)
     
+def extract_value_from_json(json, json_path_list, default_value):
+    new_json_path_list = json_path_list
+    current_json_node = new_json_path_list.pop(0)
+    
+    if current_json_node in json:
+        new_json = json[current_json_node]
+        
+        if len(new_json_path_list) < 1:
+            return new_json
+        else:
+            return extract_value_from_json(new_json, new_json_path_list, default_value)
+    else:
+        return default_value
+
 def insert_tweet_rows_into_database(tweet_data_rows):
     display_timestamped_message.display_timestamped_message('Inserting batch of ' + str(len(tweet_data_rows)) + ' tweets...')
     
@@ -66,7 +58,11 @@ def insert_tweet_rows_into_database(tweet_data_rows):
         connection = psycopg2.connect(host = 'localhost', database = postgres_config.db_name(), user = postgres_config.db_user(), password = postgres_config.db_password())
         cursor = connection.cursor()
         sql = "INSERT INTO tweet ("
-        tweet_field_names = tweet_fields()
+        tweet_field_names = []
+        
+        for field_dict in field_map():
+            for field_map_data in field_dict.values():
+                tweet_field_names.append(field_map_data['database_field'])
         
         for index, key in enumerate(tweet_field_names):
             sql += key
@@ -176,22 +172,91 @@ def start_postgresql_service():
         display_timestamped_message.display_timestamped_message('Starting postgresql service...')
         command_output = subprocess.call(['sudo', 'service', 'postgresql', 'start'])
         print(command_output)
-                
-def tweet_fields():
-    tweet_fields = [
-        'status_id',
-        'created_at_str',
-        'language',
-        'is_retweet',
-        'retweeted_status_id',
-        'text',
-        'user_screen_name',
-        'retweeted_status_retweet_count',
-        'retweeted_status_text',
-        'retweeted_status_user_screen_name',
-        'retweeted_status_language'
+        
+def field_map():
+    """Map database fields to JSON entities from the Twitter API."""
+    
+    field_map = [
+        {'tweet.status_id': {
+            'database_table': 'tweet',
+            'database_field': 'status_id',
+            'json_entity': 'tweet',
+            'json_path': ['id'],
+            'default_value': None
+        }},
+        {'tweet.text': {
+            'database_table': 'tweet',
+            'database_field': 'text',
+            'json_entity': 'tweet',
+            'json_path': ['text'],
+            'default_value': None
+        }},
+        {'tweet.created_at_str': {
+            'database_table': 'tweet',
+            'database_field': 'created_at_str',
+            'json_entity': 'tweet',
+            'json_path': ['created_at'],
+            'default_value': None
+        }},
+        {'tweet.language': {
+            'database_table': 'tweet',
+            'database_field': 'language',
+            'json_entity': 'tweet',
+            'json_path': ['lang'],
+            'default_value': None
+        }},
+        {'tweet.user_screen_name': {
+            'database_table': 'tweet',
+            'database_field': 'user_screen_name',
+            'json_entity': 'tweet',
+            'json_path': ['user', 'screen_name'],
+            'default_value': None
+        }},
+        {'tweet.is_retweet': {
+            'database_table': 'tweet',
+            'database_field': 'is_retweet',
+            'json_entity': 'tweet',
+            'json_path': None,
+            'default_value': None,
+            'expression': '"retweeted_status" in tweet_json'
+        }},
+        {'tweet.retweeted_status_id': {
+            'database_table': 'tweet',
+            'database_field': 'retweeted_status_id',
+            'json_entity': 'tweet',
+            'json_path': ['retweeted_status', 'id'],
+            'default_value': None
+        }},
+        {'tweet.retweeted_status_retweet_count': {
+            'database_table': 'tweet',
+            'database_field': 'retweeted_status_retweet_count',
+            'json_entity': 'tweet',
+            'json_path': ['retweeted_status', 'retweet_count'],
+            'default_value': None
+        }},
+        {'tweet.retweeted_status_text': {
+            'database_table': 'tweet',
+            'database_field': 'retweeted_status_text',
+            'json_entity': 'tweet',
+            'json_path': ['retweeted_status', 'text'],
+            'default_value': None
+        }},
+        {'tweet.retweeted_status_user_screen_name': {
+            'database_table': 'tweet',
+            'database_field': 'retweeted_status_user_screen_name',
+            'json_entity': 'tweet',
+            'json_path': ['retweeted_status', 'user', 'screen_name'],
+            'default_value': None
+        }},
+        {'tweet.retweeted_status_language': {
+            'database_table': 'tweet',
+            'database_field': 'retweeted_status_language',
+            'json_entity': 'tweet',
+            'json_path': ['retweeted_status', 'lang'],
+            'default_value': None
+        }}
     ]
     
-    return tweet_fields
-    
+    return field_map
+                
 load_tweets_into_postgres()
