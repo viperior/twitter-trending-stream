@@ -29,7 +29,12 @@ def convert_tweet_json_to_dict(tweet_json):
             if 'expression' in field_map_data:
                 tweet_dict[field_map_data['database_field']] = eval(field_map_data['expression'])
             else:
-                tweet_dict[field_map_data['database_field']] = extract_value_from_json(tweet_json, field_map_data['json_path'], field_map_data['default_value'])
+                extracted_value = extract_value_from_json(tweet_json, field_map_data['json_path'], field_map_data['default_value'])
+                
+                if field_map_data['database_field'] == 'media_url_https' and extracted_value is not None:
+                    extracted_value = extracted_value[0]['media_url_https']
+                
+                tweet_dict[field_map_data['database_field']] = extracted_value
             
     return tweet_dict
             
@@ -203,6 +208,13 @@ def field_map():
             'database_field': 'language',
             'json_entity': 'tweet',
             'json_path': ['lang'],
+            'default_value': None
+        }},
+        {'tweet.media_url_https': {
+            'database_table': 'tweet',
+            'database_field': 'media_url_https',
+            'json_entity': 'tweet',
+            'json_path': ['entities', 'media'],
             'default_value': None
         }},
         {'tweet.user_screen_name': {
